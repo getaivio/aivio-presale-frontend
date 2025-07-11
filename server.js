@@ -7,8 +7,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI);
+// ✅ Connect to MongoDB with proper options + error handling
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("✅ MongoDB connected"))
+.catch(err => {
+  console.error("❌ MongoDB connection error:", err.message);
+  process.exit(1); // Stop the app if DB fails
+});
 
+// ✅ Define Mongoose Models
 const Purchase = mongoose.model('Purchase', new mongoose.Schema({
   wallet: String,
   usdtAmount: Number,
@@ -25,22 +35,40 @@ const Whitelist = mongoose.model('Whitelist', new mongoose.Schema({
   approved: { type: Boolean, default: false }
 }));
 
+// ✅ API Routes
 app.post('/api/logPurchase', async (req, res) => {
-  const p = new Purchase(req.body);
-  await p.save();
-  res.send({ success: true });
+  try {
+    const p = new Purchase(req.body);
+    await p.save();
+    res.send({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ success: false, message: 'Error logging purchase' });
+  }
 });
 
 app.post('/api/whitelist', async (req, res) => {
-  const { wallet, name, email } = req.body;
-  const entry = new Whitelist({ wallet, name, email });
-  await entry.save();
-  res.send({ success: true });
+  try {
+    const { wallet, name, email } = req.body;
+    const entry = new Whitelist({ wallet, name, email });
+    await entry.save();
+    res.send({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ success: false, message: 'Error adding to whitelist' });
+  }
 });
 
 app.get('/api/checkWhitelist/:wallet', async (req, res) => {
-  const entry = await Whitelist.findOne({ wallet: req.params.wallet, approved: true });
-  res.send({ whitelisted: !!entry });
+  try {
+    const entry = await Whitelist.findOne({ wallet: req.params.wallet, approved: true });
+    res.send({ whitelisted: !!entry });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ success: false, message: 'Error checking whitelist' });
+  }
 });
 
-app.listen(3001, () => console.log("Backend running on port 3001"));
+// ✅ Start Server
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
