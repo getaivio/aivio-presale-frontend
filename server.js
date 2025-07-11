@@ -7,15 +7,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Connect to MongoDB with proper options + error handling
-mongoose.connect(process.env.MONGODB_URI, {
+// ✅ Fix: Use correct env key name (MONGO_URI)
+const mongoURI = process.env.MONGO_URI;
+if (!mongoURI) {
+  console.error("❌ MONGO_URI is not set in .env");
+  process.exit(1);
+}
+
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
 .then(() => console.log("✅ MongoDB connected"))
 .catch(err => {
   console.error("❌ MongoDB connection error:", err.message);
-  process.exit(1); // Stop the app if DB fails
+  process.exit(1);
 });
 
 // ✅ Define Mongoose Models
