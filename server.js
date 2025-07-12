@@ -5,11 +5,11 @@ require('dotenv').config();
 
 const app = express();
 
-// ✅ Allow multiple frontend origins
+// ✅ Update this list with your actual frontend domains
 const allowedOrigins = [
   'https://presale.getaivio.com',
   'https://aivio-presale-frontend.vercel.app',
-  'http://localhost:3000'
+  'https://getaivio.com'
 ];
 
 app.use(cors({
@@ -34,17 +34,14 @@ if (!mongoURI) {
   process.exit(1);
 }
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(mongoURI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => {
     console.error("❌ MongoDB connection error:", err.message);
     process.exit(1);
   });
 
-// ✅ Mongoose Models
+// ✅ Models
 const Purchase = mongoose.model('Purchase', new mongoose.Schema({
   wallet: String,
   usdtAmount: Number,
