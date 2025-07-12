@@ -4,27 +4,40 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+// ✅ Secure CORS: Allow only Vercel frontend
+const allowedOrigins = ['https://presale.getaivio.com'];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.error("❌ CORS Blocked for:", origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
 app.use(express.json());
 
-// ✅ Fix: Use correct env key name (MONGO_URI)
+// ✅ MongoDB Connection
 const mongoURI = process.env.MONGO_URI;
 if (!mongoURI) {
   console.error("❌ MONGO_URI is not set in .env");
   process.exit(1);
 }
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("✅ MongoDB connected"))
-.catch(err => {
-  console.error("❌ MongoDB connection error:", err.message);
-  process.exit(1);
-});
+mongoose.connect(mongoURI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1);
+  });
 
-// ✅ Define Mongoose Models
+// ✅ Models
 const Purchase = mongoose.model('Purchase', new mongoose.Schema({
   wallet: String,
   usdtAmount: Number,
@@ -76,5 +89,5 @@ app.get('/api/checkWhitelist/:wallet', async (req, res) => {
 });
 
 // ✅ Start Server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
